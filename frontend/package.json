@@ -1,0 +1,23 @@
+{
+  "name": "lumina-hotel-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxi build",
+    "dev": "nuxi dev",
+    "generate": "nuxi generate",
+    "preview": "nuxi preview",
+    "postinstall": "nuxi prepare"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.11.4",
+    "nuxt": "^3.11.0",
+    "nuxi": "^3.11.0"
+  },
+  "dependencies": {
+    "lucide-vue-next": "^0.344.0",
+    "pinia": "^2.1.7",
+    "@pinia/nuxt": "^0.5.1",
+    "@pinia-plugin-persistedstate/nuxt": "^1.2.0"
+  }
+}

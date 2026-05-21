@@ -1,0 +1,8 @@
+{
+  "name": "Lumina Hotel & Resorts",
+  "description": "A premium, full-stack hotel booking platform with secure user and admin portals.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
