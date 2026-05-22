@@ -17,9 +17,10 @@ func NewBookingController(s *services.BookingService) *BookingController {
 
 func (ctrl *BookingController) Store(c *gin.Context) {
 	var input struct {
-		RoomID   uint   `json:"room_id" binding:"required"`
-		CheckIn  string `json:"check_in" binding:"required"`
-		CheckOut string `json:"check_out" binding:"required"`
+		RoomID    uint   `json:"room_id" binding:"required"`
+		CheckIn   string `json:"check_in" binding:"required"`
+		CheckOut  string `json:"check_out" binding:"required"`
+		PromoCode string `json:"promo_code"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -29,7 +30,7 @@ func (ctrl *BookingController) Store(c *gin.Context) {
 
 	userID := c.MustGet("userID").(float64) // JWT returns claim as float64
 
-	booking, err := ctrl.service.CreateBooking(uint(userID), input.RoomID, input.CheckIn, input.CheckOut)
+	booking, err := ctrl.service.CreateBooking(uint(userID), input.RoomID, input.CheckIn, input.CheckOut, input.PromoCode)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

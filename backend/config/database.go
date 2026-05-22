@@ -18,7 +18,7 @@ func ConnectDatabase() {
 	}
 
 	// Auto-migrate models
-	err = database.AutoMigrate(&models.User{}, &models.Room{}, &models.Category{}, &models.Booking{})
+	err = database.AutoMigrate(&models.User{}, &models.Room{}, &models.Category{}, &models.Booking{}, &models.WeekendPricing{})
 	if err != nil {
 		log.Fatal("Migration failed:", err)
 	}

@@ -16,16 +16,19 @@ func SetupRoutes(r *gin.Engine) {
 	userRepo := repositories.NewUserRepository(config.DB)
 	roomRepo := repositories.NewRoomRepository(config.DB)
 	bookingRepo := repositories.NewBookingRepository(config.DB)
+	weekendPricingRepo := repositories.NewWeekendPricingRepository(config.DB)
 	
 	// Services
 	authService := services.NewAuthService(userRepo)
 	roomService := services.NewRoomService(roomRepo)
-	bookingService := services.NewBookingService(bookingRepo, roomRepo)
+	weekendPricingService := services.NewWeekendPricingService(weekendPricingRepo, roomRepo)
+	bookingService := services.NewBookingService(bookingRepo, roomRepo, weekendPricingService)
 
 	// Controllers
 	authController := controllers.NewAuthController(authService)
 	roomController := controllers.NewRoomController(roomService)
 	bookingController := controllers.NewBookingController(bookingService)
+	weekendPricingController := controllers.NewWeekendPricingController(weekendPricingService)
 
 	// ==========================================
 	// 1. Separate Guard: User Auth & Protected
@@ -68,6 +71,14 @@ func SetupRoutes(r *gin.Engine) {
 			// Bookings Management
 			adminProtected.GET("/bookings", bookingController.Index)
 			adminProtected.PUT("/bookings/:id/status", bookingController.UpdateStatus)
+
+			// Weekend pricing management
+			adminProtected.GET("/weekend-pricing", weekendPricingController.Index)
+			adminProtected.GET("/weekend-pricing/:id", weekendPricingController.Show)
+			adminProtected.POST("/weekend-pricing", weekendPricingController.Store)
+			adminProtected.PUT("/weekend-pricing/:id", weekendPricingController.Update)
+			adminProtected.DELETE("/weekend-pricing/:id", weekendPricingController.Destroy)
+			adminProtected.GET("/rooms/:id/weekend-pricing", weekendPricingController.GetByRoom)
 		}
 	}
 
@@ -81,6 +92,7 @@ func SetupRoutes(r *gin.Engine) {
 	// Public Room Routes
 	api.GET("/rooms", roomController.Index)
 	api.GET("/rooms/:id", roomController.Show)
+	api.GET("/rooms/:id/price", weekendPricingController.GetPrice)
 
 	// Legacy Protected Routes
 	protected := api.Group("/")

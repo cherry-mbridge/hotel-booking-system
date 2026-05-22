@@ -8,16 +8,17 @@ import (
 )
 
 type BookingService struct {
-	repo     *repositories.BookingRepository
-	roomRepo *repositories.RoomRepository
+	repo        *repositories.BookingRepository
+	roomRepo    *repositories.RoomRepository
+	pricingServ *WeekendPricingService
 }
 
-func NewBookingService(r *repositories.BookingRepository, rr *repositories.RoomRepository) *BookingService {
-	return &BookingService{repo: r, roomRepo: rr}
+func NewBookingService(r *repositories.BookingRepository, rr *repositories.RoomRepository, ps *WeekendPricingService) *BookingService {
+	return &BookingService{repo: r, roomRepo: rr, pricingServ: ps}
 }
 
-func (s *BookingService) CreateBooking(userID uint, roomID uint, checkIn, checkOut string) (models.Booking, error) {
-	room, err := s.roomRepo.FindByID(fmt.Sprintf("%d", roomID))
+func (s *BookingService) CreateBooking(userID uint, roomID uint, checkIn, checkOut string, promoCode string) (models.Booking, error) {
+	_, err := s.roomRepo.FindByID(fmt.Sprintf("%d", roomID))
 	if err != nil {
 		return models.Booking{}, err
 	}
@@ -25,15 +26,17 @@ func (s *BookingService) CreateBooking(userID uint, roomID uint, checkIn, checkO
 	in, _ := time.Parse("2006-01-02", checkIn)
 	out, _ := time.Parse("2006-01-02", checkOut)
 	
-	duration := out.Sub(in).Hours() / 24
-	totalPrice := duration * room.PricePerNight
+	breakdown, err := s.pricingServ.CalculatePriceBreakdown(fmt.Sprintf("%d", roomID), checkIn, checkOut, promoCode)
+	if err != nil {
+		return models.Booking{}, err
+	}
 
 	booking := models.Booking{
 		UserID:     userID,
 		RoomID:     roomID,
 		CheckIn:    in,
 		CheckOut:   out,
-		TotalPrice: totalPrice,
+		TotalPrice: breakdown.FinalPrice,
 		Status:     "pending",
 	}
 

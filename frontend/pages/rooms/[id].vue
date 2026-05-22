@@ -1,5 +1,5 @@
 <script setup>
-import { Users, Waves, Shield, Calendar, CreditCard, ChevronLeft } from 'lucide-vue-next';
+import { Users, Waves, Shield, Calendar, CreditCard, ChevronLeft, Percent } from 'lucide-vue-next';
 const route = useRoute();
 const config = useRuntimeConfig();
 const authStore = useUserAuth();
@@ -8,9 +8,38 @@ const { data: room, pending, error } = await useFetch(`${config.public.apiBase}/
 
 const checkIn = ref('');
 const checkOut = ref('');
+const promoCode = ref('');
+const priceBreakdown = ref(null);
+const priceLoading = ref(false);
 const bookingLoading = ref(false);
 const bookingSuccess = ref(false);
 const bookingError = ref('');
+
+const calculateDynamicPrice = async () => {
+  if (!checkIn.value || !checkOut.value) {
+    priceBreakdown.value = null;
+    return;
+  }
+  priceLoading.value = true;
+  try {
+    const data = await $fetch(`${config.public.apiBase}/rooms/${route.params.id}/price`, {
+      params: {
+        check_in: checkIn.value,
+        check_out: checkOut.value,
+        promo_code: promoCode.value
+      }
+    });
+    priceBreakdown.value = data;
+  } catch (err) {
+    priceBreakdown.value = null;
+  } finally {
+    priceLoading.value = false;
+  }
+};
+
+watch([checkIn, checkOut, promoCode], () => {
+  calculateDynamicPrice();
+});
 
 const handleBooking = async () => {
   if (!authStore.isLoggedIn) {
@@ -30,12 +59,13 @@ const handleBooking = async () => {
       body: {
         room_id: Number(route.params.id),
         check_in: checkIn.value,
-        check_out: checkOut.value
+        check_out: checkOut.value,
+        promo_code: promoCode.value
       }
     });
     bookingSuccess.value = true;
   } catch (err) {
-    bookingError.value = 'Failed to book. Please ensure you are logged in and dates are valid.';
+    bookingError.value = err.data?.error || 'Failed to book. Please ensure you are logged in and dates are valid.';
   } finally {
     bookingLoading.value = false;
   }
@@ -97,11 +127,64 @@ const handleBooking = async () => {
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
               <label class="text-xs font-bold uppercase tracking-widest text-slate-400">Check In</label>
-              <input v-model="checkIn" type="date" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none focus:ring-2 focus:ring-blue-500/20" />
+              <input v-model="checkIn" type="date" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-800 font-semibold" />
             </div>
             <div class="space-y-2">
               <label class="text-xs font-bold uppercase tracking-widest text-slate-400">Check Out</label>
-              <input v-model="checkOut" type="date" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none focus:ring-2 focus:ring-blue-500/20" />
+              <input v-model="checkOut" type="date" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-800 font-semibold" />
+            </div>
+          </div>
+
+          <!-- Promo Code Input -->
+          <div class="space-y-2">
+            <label class="text-xs font-bold uppercase tracking-widest text-slate-400">Promo Code (Optional)</label>
+            <input v-model="promoCode" type="text" placeholder="WELCOME10, SUMMER20, LUMINA30" class="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none focus:ring-2 focus:ring-blue-500/20 uppercase font-semibold placeholder-slate-300" />
+          </div>
+
+          <!-- Price Calculation Breakdown -->
+          <div v-if="priceLoading" class="flex justify-center py-4">
+            <div class="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+          </div>
+
+          <div v-else-if="priceBreakdown" class="space-y-3.5 rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-100/80">
+            <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Price Details</h4>
+            
+            <div class="flex justify-between text-sm text-slate-600">
+              <span>Base Rate (Stay Total)</span>
+              <span>${{ priceBreakdown.base_price.toFixed(2) }}</span>
+            </div>
+
+            <!-- Weekend Surcharge Label -->
+            <div v-if="priceBreakdown.weekend_adjustment !== 0" class="flex justify-between items-center text-sm">
+              <span class="inline-flex items-center gap-1.5 font-semibold" :class="priceBreakdown.weekend_adjustment > 0 ? 'text-red-600' : 'text-green-600'">
+                <Percent class="h-3.5 w-3.5" />
+                {{ priceBreakdown.weekend_adjustment > 0 ? 'Weekend Surcharge' : 'Weekend Discount' }}
+              </span>
+              <span class="font-bold shrink-0" :class="priceBreakdown.weekend_adjustment > 0 ? 'text-red-600' : 'text-green-600'">
+                {{ priceBreakdown.weekend_adjustment > 0 ? '+' : '' }}${{ priceBreakdown.weekend_adjustment.toFixed(2) }}
+              </span>
+            </div>
+
+            <!-- Seasonal pricing markup -->
+            <div v-if="priceBreakdown.seasonal_pricing !== 0" class="flex justify-between items-center text-sm text-amber-700">
+              <span class="font-semibold">Seasonal Peak Adjustment (10%)</span>
+              <span class="font-bold">+${{ priceBreakdown.seasonal_pricing.toFixed(2) }}</span>
+            </div>
+
+            <!-- Promotion discount -->
+            <div v-if="priceBreakdown.promotion_discount !== 0" class="flex justify-between items-center text-sm text-emerald-600">
+              <span class="font-semibold">Promo code discount</span>
+              <span class="font-bold">-${{ priceBreakdown.promotion_discount.toFixed(2) }}</span>
+            </div>
+
+            <div class="border-t border-slate-200 pt-3 flex justify-between items-baseline gap-4">
+              <div class="min-w-0">
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Stay Price</p>
+                <p v-if="priceBreakdown.base_price + priceBreakdown.seasonal_pricing !== priceBreakdown.final_price" class="text-xs text-slate-400 line-through">
+                  Original: ${{ (priceBreakdown.base_price + priceBreakdown.seasonal_pricing).toFixed(2) }}
+                </p>
+              </div>
+              <p class="text-2xl font-black text-slate-900 shrink-0">${{ priceBreakdown.final_price.toFixed(2) }}</p>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 <script setup>
-import { LayoutDashboard, Bed, CalendarCheck, LogOut, ShieldAlert, Hotel } from 'lucide-vue-next';
+import { LayoutDashboard, Bed, CalendarCheck, LogOut, ShieldAlert, Hotel, Percent } from 'lucide-vue-next';
 
 const adminAuth = useAdminAuth();
 const router = useRouter();
@@ -37,6 +37,11 @@ const handleLogout = async () => {
         <NuxtLink to="/admin/bookings" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-900 text-slate-300 hover:text-white" active-class="bg-blue-600/10 text-blue-400 border border-blue-500/20 font-bold">
           <CalendarCheck class="h-5 w-5" />
           <span>Guest Bookings</span>
+        </NuxtLink>
+
+        <NuxtLink to="/admin/weekend-pricing" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-900 text-slate-300 hover:text-white" active-class="bg-blue-600/10 text-blue-400 border border-blue-500/20 font-bold">
+          <Percent class="h-5 w-5" />
+          <span>Weekend Pricing</span>
         </NuxtLink>
       </nav>
 

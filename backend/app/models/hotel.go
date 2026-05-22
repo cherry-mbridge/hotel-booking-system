@@ -46,3 +46,20 @@ type Booking struct {
 	Status     string    `json:"status" gorm:"default:pending"` // pending, confirmed, cancelled
 	CreatedAt  time.Time `json:"created_at"`
 }
+
+type WeekendPricing struct {
+	ID              uint       `gorm:"primaryKey" json:"id"`
+	RoomTypeID      uint       `gorm:"column:room_type_id" json:"room_type_id" binding:"required"`
+	AdjustmentType  string     `gorm:"column:adjustment_type" json:"adjustment_type" binding:"required"` // increase, decrease
+	ValueType       string     `gorm:"column:value_type" json:"value_type" binding:"required"`          // percentage, fixed
+	AdjustmentValue float64    `gorm:"column:adjustment_value" json:"adjustment_value" binding:"required"`
+	DaysOfWeek      string     `gorm:"column:days_of_week" json:"days_of_week" binding:"required"`       // e.g. "Friday,Saturday,Sunday"
+	StartDate       *time.Time `gorm:"column:start_date" json:"start_date"`                             // Nullable start date
+	EndDate         *time.Time `gorm:"column:end_date" json:"end_date"`                                 // Nullable end date
+	IsActive        bool       `gorm:"column:is_active;default:true" json:"is_active"`
+	CreatedAt       time.Time  `gorm:"column:created_at" json:"created_at"`
+}
+
+func (WeekendPricing) TableName() string {
+	return "weekend_pricings"
+}
