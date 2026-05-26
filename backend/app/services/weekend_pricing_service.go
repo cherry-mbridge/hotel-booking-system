@@ -9,12 +9,14 @@ import (
 )
 
 type WeekendPricingService struct {
-	repo     *repositories.WeekendPricingRepository
-	roomRepo *repositories.RoomRepository
+	repo        *repositories.WeekendPricingRepository
+	roomRepo    *repositories.RoomRepository
+	promoRepo   *repositories.PromoRepository
+	bookingRepo *repositories.BookingRepository
 }
 
-func NewWeekendPricingService(r *repositories.WeekendPricingRepository, rr *repositories.RoomRepository) *WeekendPricingService {
-	return &WeekendPricingService{repo: r, roomRepo: rr}
+func NewWeekendPricingService(r *repositories.WeekendPricingRepository, rr *repositories.RoomRepository, pr *repositories.PromoRepository, br *repositories.BookingRepository) *WeekendPricingService {
+	return &WeekendPricingService{repo: r, roomRepo: rr, promoRepo: pr, bookingRepo: br}
 }
 
 func (s *WeekendPricingService) GetAll() ([]models.WeekendPricing, error) {
@@ -242,13 +244,45 @@ func (s *WeekendPricingService) CalculatePriceBreakdown(roomID, checkInStr, chec
 	var promoDiscount float64
 	pCode := strings.ToUpper(strings.TrimSpace(promoCode))
 	subtotalBeforePromo := baseTotal + weekendTotal + seasonalTotal
+	fmt.Println(pCode)
 
-	if pCode == "WELCOME10" {
-		promoDiscount = subtotalBeforePromo * 0.10
-	} else if pCode == "SUMMER20" {
-		promoDiscount = subtotalBeforePromo * 0.20
-	} else if pCode == "LUMINA30" {
-		promoDiscount = subtotalBeforePromo * 0.30
+	if pCode != "" && s.promoRepo != nil {
+
+		promo, err := s.promoRepo.FindByCode(pCode)
+
+		bookingCount, err := s.bookingRepo.FindByPromoCodeID(promo.ID)
+
+		if err == nil && promo.IsActive {
+
+			now := time.Now()
+			valid := true
+			// date validation
+			if promo.StartDate != nil && now.Before(*promo.StartDate) {
+				valid = false
+			}
+
+			if promo.EndDate != nil && now.After(*promo.EndDate) {
+				valid = false
+			}
+
+			if promo.MaxUses > 0 && bookingCount >= int64(promo.MaxUses) {
+				valid = false
+			}
+
+			// usage limit
+			if promo.MaxUses > 0 && promo.UsedCount >= promo.MaxUses {
+				valid = false
+			}
+
+			if valid {
+				if promo.DiscountType == "percentage" {
+					promoDiscount = subtotalBeforePromo * (promo.Value / 100)
+				} else {
+					promoDiscount = promo.Value
+					fmt.Println(promo.Value)
+				}
+			}
+		}
 	}
 
 	finalPrice := subtotalBeforePromo - promoDiscount

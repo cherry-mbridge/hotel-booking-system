@@ -26,10 +26,10 @@ func (ctrl *BookingController) Store(c *gin.Context) {
 	}
 
 	userID := c.MustGet("userID").(float64) // JWT returns claim as float64
-
+	fmt.Println(userID)
 	booking, err := ctrl.service.CreateBooking(uint(userID), input.RoomID, input.CheckIn, input.CheckOut, input.PromoCode)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -65,9 +65,25 @@ func (ctrl *BookingController) UpdateStatus(c *gin.Context) {
 	}
 
 	if err := ctrl.service.UpdateBookingStatus(id, input.Status); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Booking status updated"})
 }
+
+func (ctrl *BookingController) Delete(c *gin.Context) {
+	id := c.Param("id")
+
+	if err := ctrl.service.Delete(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Booking deleted successfully",
+	})
+}
+
