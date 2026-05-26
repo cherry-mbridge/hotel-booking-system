@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"lumina-hotel-api/app/dto"
 	"lumina-hotel-api/app/services"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,7 +36,7 @@ func (ctrl *RoomController) Show(c *gin.Context) {
 }
 
 func (ctrl *RoomController) Store(c *gin.Context) {
-	var input services.RoomInput
+	var input dto.RoomInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -51,7 +53,7 @@ func (ctrl *RoomController) Store(c *gin.Context) {
 
 func (ctrl *RoomController) Update(c *gin.Context) {
 	id := c.Param("id")
-	var input services.RoomInput
+	var input dto.RoomInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

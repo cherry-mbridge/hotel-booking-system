@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"lumina-hotel-api/app/models"
+
 	"gorm.io/gorm"
 )
 

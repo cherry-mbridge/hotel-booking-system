@@ -6,6 +6,7 @@ import (
 	"lumina-hotel-api/app/repositories"
 	"lumina-hotel-api/app/services"
 	"lumina-hotel-api/config"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,7 +18,7 @@ func SetupRoutes(r *gin.Engine) {
 	roomRepo := repositories.NewRoomRepository(config.DB)
 	bookingRepo := repositories.NewBookingRepository(config.DB)
 	weekendPricingRepo := repositories.NewWeekendPricingRepository(config.DB)
-	
+
 	// Services
 	authService := services.NewAuthService(userRepo)
 	roomService := services.NewRoomService(roomRepo)
@@ -43,7 +44,7 @@ func SetupRoutes(r *gin.Engine) {
 		userProtected := userGroup.Group("/")
 		userProtected.Use(middleware.UserAuthMiddleware())
 		{
-			userProtected.GET("/profile", authController.MeUser)
+			// userProtected.GET("/profile", authController.MeUser)
 			userProtected.GET("/bookings", bookingController.UserBookings)
 			userProtected.POST("/bookings", bookingController.Store)
 		}
@@ -61,8 +62,8 @@ func SetupRoutes(r *gin.Engine) {
 		adminProtected := adminGroup.Group("/")
 		adminProtected.Use(middleware.AdminAuthMiddleware())
 		{
-			adminProtected.GET("/profile", authController.MeAdmin)
-			
+			// adminProtected.GET("/profile", authController.MeAdmin)
+
 			// Rooms CRUD
 			adminProtected.POST("/rooms", roomController.Store)
 			adminProtected.PUT("/rooms/:id", roomController.Update)
@@ -82,37 +83,16 @@ func SetupRoutes(r *gin.Engine) {
 		}
 	}
 
-	// ==========================================
-	// 3. Backward Compatibility & Public Endpoints
-	// ==========================================
-	// Legacy basic auth mapped to User endpoints
-	api.POST("/register", authController.Register)
-	api.POST("/login", authController.UserLogin)
-
 	// Public Room Routes
 	api.GET("/rooms", roomController.Index)
 	api.GET("/rooms/:id", roomController.Show)
 	api.GET("/rooms/:id/price", weekendPricingController.GetPrice)
 
 	// Legacy Protected Routes
-	protected := api.Group("/")
-	protected.Use(middleware.UserAuthMiddleware())
-	{
-		protected.GET("/bookings", bookingController.UserBookings)
-		protected.POST("/bookings", bookingController.Store)
-	}
-
-	// Legacy Admin Routes (pointing to AdminAuthMiddleware for unified safety)
-	admin := api.Group("/admin_legacy")
-	admin.Use(middleware.AdminAuthMiddleware())
-	{
-		// Rooms
-		admin.POST("/rooms", roomController.Store)
-		admin.PUT("/rooms/:id", roomController.Update)
-		admin.DELETE("/rooms/:id", roomController.Destroy)
-		
-		// Bookings
-		admin.GET("/bookings", bookingController.Index)
-		admin.PUT("/bookings/:id/status", bookingController.UpdateStatus)
-	}
+	// protected := api.Group("/")
+	// protected.Use(middleware.UserAuthMiddleware())
+	// {
+	// 	protected.GET("/bookings", bookingController.UserBookings)
+	// 	protected.POST("/bookings", bookingController.Store)
+	// }
 }

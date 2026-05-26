@@ -104,52 +104,52 @@ func AdminAuthMiddleware() gin.HandlerFunc {
 }
 
 // AuthMiddleware is retained for legacy / backward compatibility
-func AuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
-			c.Abort()
-			return
-		}
+// func AuthMiddleware() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		authHeader := c.GetHeader("Authorization")
+// 		if authHeader == "" {
+// 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
+// 			c.Abort()
+// 			return
+// 		}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
-			c.Abort()
-			return
-		}
+// 		parts := strings.Split(authHeader, " ")
+// 		if len(parts) != 2 || parts[0] != "Bearer" {
+// 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
+// 			c.Abort()
+// 			return
+// 		}
 
-		tokenString := parts[1]
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(os.Getenv("JWT_SECRET")), nil
-		})
+// 		tokenString := parts[1]
+// 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+// 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+// 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+// 			}
+// 			return []byte(os.Getenv("JWT_SECRET")), nil
+// 		})
 
-		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			c.Abort()
-			return
-		}
+// 		if err != nil || !token.Valid {
+// 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+// 			c.Abort()
+// 			return
+// 		}
 
-		claims, _ := token.Claims.(jwt.MapClaims)
-		c.Set("userID", claims["sub"])
-		c.Set("userRole", claims["role"])
-		c.Next()
-	}
-}
+// 		claims, _ := token.Claims.(jwt.MapClaims)
+// 		c.Set("userID", claims["sub"])
+// 		c.Set("userRole", claims["role"])
+// 		c.Next()
+// 	}
+// }
 
-// AdminMiddleware is retained for legacy / backward compatibility
-func AdminMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		role, exists := c.Get("userRole")
-		if !exists || role != "admin" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
-			c.Abort()
-			return
-		}
-		c.Next()
-	}
-}
+// // AdminMiddleware is retained for legacy / backward compatibility
+// func AdminMiddleware() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		role, exists := c.Get("userRole")
+// 		if !exists || role != "admin" {
+// 			c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
+// 			c.Abort()
+// 			return
+// 		}
+// 		c.Next()
+// 	}
+// }

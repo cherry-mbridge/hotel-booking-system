@@ -1,21 +1,13 @@
 package services
 
 import (
+	"lumina-hotel-api/app/dto"
 	"lumina-hotel-api/app/models"
 	"lumina-hotel-api/app/repositories"
 )
 
 type RoomService struct {
 	repo *repositories.RoomRepository
-}
-
-type RoomInput struct {
-	Name          string  `json:"name"`
-	CategoryID    uint    `json:"category_id"`
-	Description   string  `json:"description"`
-	PricePerNight float64 `json:"price_per_night"`
-	Capacity      int     `json:"capacity"`
-	ImageURL      string  `json:"image_url"`
 }
 
 func NewRoomService(r *repositories.RoomRepository) *RoomService {
@@ -30,7 +22,7 @@ func (s *RoomService) GetRoomByID(id string) (models.Room, error) {
 	return s.repo.FindByID(id)
 }
 
-func (s *RoomService) CreateRoom(input RoomInput) (models.Room, error) {
+func (s *RoomService) CreateRoom(input dto.RoomInput) (models.Room, error) {
 	room := models.Room{
 		Name:          input.Name,
 		CategoryID:    input.CategoryID,
@@ -42,7 +34,7 @@ func (s *RoomService) CreateRoom(input RoomInput) (models.Room, error) {
 	return s.repo.Create(room)
 }
 
-func (s *RoomService) UpdateRoom(id string, input RoomInput) (models.Room, error) {
+func (s *RoomService) UpdateRoom(id string, input dto.RoomInput) (models.Room, error) {
 	room := models.Room{
 		Name:          input.Name,
 		CategoryID:    input.CategoryID,
