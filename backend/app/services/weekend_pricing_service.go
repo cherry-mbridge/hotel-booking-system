@@ -137,7 +137,7 @@ type PriceBreakdown struct {
 	FinalPrice        float64 `json:"final_price"`
 }
 
-func (s *WeekendPricingService) CalculatePriceBreakdown(roomID string, checkInStr, checkOutStr, promoCode string) (PriceBreakdown, error) {
+func (s *WeekendPricingService) CalculatePriceBreakdown(roomID, checkInStr, checkOutStr, promoCode string) (PriceBreakdown, error) {
 	room, err := s.roomRepo.FindByID(roomID)
 	if err != nil {
 		return PriceBreakdown{}, err

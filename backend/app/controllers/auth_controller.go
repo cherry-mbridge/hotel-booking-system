@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"lumina-hotel-api/app/dto"
 	"lumina-hotel-api/app/services"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,11 +33,7 @@ func getUserIDFromContext(c *gin.Context, key string) (uint, bool) {
 }
 
 func (ctrl *AuthController) Register(c *gin.Context) {
-	var input struct {
-		Name     string `json:"name" binding:"required"`
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required,min=6"`
-	}
+	var input dto.UserRegisterInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -51,15 +49,12 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, user)
 }
 
-func (ctrl *AuthController) Login(c *gin.Context) {
-	ctrl.UserLogin(c)
-}
+// func (ctrl *AuthController) Login(c *gin.Context) {
+// 	ctrl.UserLogin(c)
+// }
 
 func (ctrl *AuthController) UserLogin(c *gin.Context) {
-	var input struct {
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required"`
-	}
+	var input dto.UserLoginInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -79,10 +74,7 @@ func (ctrl *AuthController) UserLogin(c *gin.Context) {
 }
 
 func (ctrl *AuthController) AdminLogin(c *gin.Context) {
-	var input struct {
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required"`
-	}
+	var input dto.UserLoginInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -109,38 +101,38 @@ func (ctrl *AuthController) AdminLogout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully from Admin Guard"})
 }
 
-func (ctrl *AuthController) MeUser(c *gin.Context) {
-	id, ok := getUserIDFromContext(c, "userID")
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized context"})
-		return
-	}
+// func (ctrl *AuthController) MeUser(c *gin.Context) {
+// 	id, ok := getUserIDFromContext(c, "userID")
+// 	if !ok {
+// 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized context"})
+// 		return
+// 	}
 
-	user, err := ctrl.service.GetProfile(id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
+// 	user, err := ctrl.service.GetProfile(id)
+// 	if err != nil {
+// 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+// 		return
+// 	}
 
-	c.JSON(http.StatusOK, user)
-}
+// 	c.JSON(http.StatusOK, user)
+// }
 
-func (ctrl *AuthController) MeAdmin(c *gin.Context) {
-	id, ok := getUserIDFromContext(c, "adminID")
-	if !ok {
-		// Fallback to userID if adminID was set there
-		id, ok = getUserIDFromContext(c, "userID")
-	}
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized context"})
-		return
-	}
+// func (ctrl *AuthController) MeAdmin(c *gin.Context) {
+// 	id, ok := getUserIDFromContext(c, "adminID")
+// 	if !ok {
+// 		// Fallback to userID if adminID was set there
+// 		id, ok = getUserIDFromContext(c, "userID")
+// 	}
+// 	if !ok {
+// 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized context"})
+// 		return
+// 	}
 
-	user, err := ctrl.service.GetProfile(id)
-	if err != nil || user.Role != "admin" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
-		return
-	}
+// 	user, err := ctrl.service.GetProfile(id)
+// 	if err != nil || user.Role != "admin" {
+// 		c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
+// 		return
+// 	}
 
-	c.JSON(http.StatusOK, user)
-}
+// 	c.JSON(http.StatusOK, user)
+// }

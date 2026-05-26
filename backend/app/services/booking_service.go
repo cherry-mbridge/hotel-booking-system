@@ -25,7 +25,7 @@ func (s *BookingService) CreateBooking(userID uint, roomID uint, checkIn, checkO
 
 	in, _ := time.Parse("2006-01-02", checkIn)
 	out, _ := time.Parse("2006-01-02", checkOut)
-	
+
 	breakdown, err := s.pricingServ.CalculatePriceBreakdown(fmt.Sprintf("%d", roomID), checkIn, checkOut, promoCode)
 	if err != nil {
 		return models.Booking{}, err

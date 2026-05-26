@@ -21,7 +21,7 @@ func NewAuthService(r *repositories.UserRepository) *AuthService {
 
 func (s *AuthService) Register(name, email, password string) (models.User, error) {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	
+
 	user := models.User{
 		Name:     name,
 		Email:    email,

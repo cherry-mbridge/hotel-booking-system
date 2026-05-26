@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"fmt"
+	"lumina-hotel-api/app/dto"
 	"lumina-hotel-api/app/services"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,12 +18,7 @@ func NewBookingController(s *services.BookingService) *BookingController {
 }
 
 func (ctrl *BookingController) Store(c *gin.Context) {
-	var input struct {
-		RoomID    uint   `json:"room_id" binding:"required"`
-		CheckIn   string `json:"check_in" binding:"required"`
-		CheckOut  string `json:"check_out" binding:"required"`
-		PromoCode string `json:"promo_code"`
-	}
+	var input dto.BookingStoreInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -60,9 +57,7 @@ func (ctrl *BookingController) Index(c *gin.Context) {
 
 func (ctrl *BookingController) UpdateStatus(c *gin.Context) {
 	id := c.Param("id")
-	var input struct {
-		Status string `json:"status" binding:"required"`
-	}
+	var input dto.BookingUpdateStatusInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

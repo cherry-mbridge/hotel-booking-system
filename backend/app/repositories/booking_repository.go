@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"lumina-hotel-api/app/models"
+
 	"gorm.io/gorm"
 )
 
@@ -20,7 +21,7 @@ func (r *BookingRepository) Create(booking models.Booking) (models.Booking, erro
 
 func (r *BookingRepository) FindByUser(userID string) ([]models.Booking, error) {
 	var bookings []models.Booking
-	err := r.db.Preload("Room").Where("user_id = ?", userID).Find(&bookings).Error
+	err := r.db.Preload("User").Preload("Room").Where("user_id = ?", userID).Find(&bookings).Error
 	return bookings, err
 }
 
