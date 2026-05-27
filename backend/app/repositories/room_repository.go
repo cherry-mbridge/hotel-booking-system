@@ -20,6 +20,22 @@ func (r *RoomRepository) FindAll() ([]models.Room, error) {
 	return rooms, err
 }
 
+func (r *RoomRepository) FindAllPaginated(page, perPage int) ([]models.Room, int64, error) {
+	var rooms []models.Room
+	var total int64
+
+	err := r.db.Model(&models.Room{}).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = r.db.Preload("Category").Offset((page - 1) * perPage).Limit(perPage).Find(&rooms).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return rooms, total, nil
+}
+
 func (r *RoomRepository) FindByID(id string) (models.Room, error) {
 	var room models.Room
 	err := r.db.Preload("Category").First(&room, id).Error

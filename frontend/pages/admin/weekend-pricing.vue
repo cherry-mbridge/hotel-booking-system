@@ -10,7 +10,7 @@ const config = useRuntimeConfig();
 const authStore = useAdminAuth();
 
 // Fetch rooms for the dropdown selector
-const { data: rooms } = await useFetch(`${config.public.apiBase}/rooms`);
+const { data: rooms } = await useFetch(`${config.public.apiBase}/rooms/all`);
 
 // Retrieve weekend pricing rules
 const { data: rules, pending, error, refresh } = await useFetch(`${config.public.apiBase}/admin/weekend-pricing`, {

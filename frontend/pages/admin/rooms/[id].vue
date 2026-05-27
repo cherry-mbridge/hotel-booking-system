@@ -10,13 +10,16 @@ const route = useRoute();
 const authStore = useAdminAuth();
 const config = useRuntimeConfig();
 
+const categories = ref([]);
+const categoriesLoading = ref(true);
+
 const form = reactive({
   name: '',
   description: '',
   price_per_night: 0,
   capacity: 1,
   image_url: '',
-  category_id: 1
+  category_id: ''
 });
 
 const loading = ref(false);
@@ -24,6 +27,9 @@ const fetching = ref(true);
 
 onMounted(async () => {
   try {
+    const catsData = await $fetch(`${config.public.apiBase}/categories/all`);
+    categories.value = catsData || [];
+
     const data = await $fetch(`${config.public.apiBase}/rooms/${route.params.id}`);
     form.name = data.name;
     form.description = data.description;
@@ -32,9 +38,10 @@ onMounted(async () => {
     form.image_url = data.image_url;
     form.category_id = data.category_id;
   } catch (err) {
-    alert('Failed to fetch room details');
+    alert('Failed to fetch details');
   } finally {
     fetching.value = false;
+    categoriesLoading.value = false;
   }
 });
 
@@ -72,7 +79,7 @@ const handleSubmit = async () => {
       <p class="mt-2 text-slate-400">Update the information for this property listing.</p>
     </header>
 
-    <div v-if="fetching" class="flex h-64 items-center justify-center">
+    <div v-if="fetching || categoriesLoading" class="flex h-64 items-center justify-center">
       <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
     </div>
 
@@ -89,11 +96,20 @@ const handleSubmit = async () => {
         </div>
 
         <div class="space-y-2">
+          <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Room Category</label>
+          <select v-model="form.category_id" required class="w-full rounded-2xl border border-slate-800 bg-slate-900 p-4 select-style outline-none text-white focus:ring-2 focus:ring-blue-500/20 transition-all">
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+              {{ cat.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="space-y-2">
           <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Price/Night ($)</label>
           <input v-model="form.price_per_night" required type="number" class="w-full rounded-2xl border border-slate-800 bg-slate-900 p-4 outline-none text-white focus:ring-2 focus:ring-blue-500/20 transition-all" />
         </div>
 
-        <div class="space-y-2">
+        <div class="space-y-2 lg:col-span-2">
           <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Max Capacity</label>
           <input v-model="form.capacity" required type="number" class="w-full rounded-2xl border border-slate-800 bg-slate-900 p-4 outline-none text-white focus:ring-2 focus:ring-blue-500/20 transition-all" />
         </div>
@@ -112,3 +128,12 @@ const handleSubmit = async () => {
   </div>
 </template>
 
+<style scoped>
+.select-style {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1em;
+}
+</style>

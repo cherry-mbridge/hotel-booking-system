@@ -3,6 +3,7 @@ package controllers
 import (
 	"lumina-hotel-api/app/dto"
 	"lumina-hotel-api/app/services"
+	"lumina-hotel-api/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -37,6 +38,33 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err := ctrl.service.FindByEmail(input.Email)
+	if err == nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Email Already Used."})
+		return
+	}
+
+	if !utils.MinLengthRegex.MatchString(input.Password) {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Password must be at least 8 characters long"})
+		return
+	}
+	if !utils.LowerRegex.MatchString(input.Password) {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Password must contain at least one lowercase letter"})
+		return
+	}
+	if !utils.UpperRegex.MatchString(input.Password) {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Password must contain at least one uppercase letter"})
+		return
+	}
+	if !utils.DigitRegex.MatchString(input.Password) {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Password must contain at least one number"})
+		return
+	}
+	if !utils.SpecialRegex.MatchString(input.Password) {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Password must contain at least one special character"})
 		return
 	}
 

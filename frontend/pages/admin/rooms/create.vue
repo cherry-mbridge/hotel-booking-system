@@ -9,13 +9,30 @@ definePageMeta({
 const authStore = useAdminAuth();
 const config = useRuntimeConfig();
 
+const categories = ref([]);
+const categoriesLoading = ref(true);
+
 const form = reactive({
   name: '',
   description: '',
-  price_per_night: 0,
-  capacity: 1,
+  price_per_night: 150,
+  capacity: 2,
   image_url: 'https://images.unsplash.com/photo-1590490360182-c33d57733427',
-  category_id: 1
+  category_id: ''
+});
+
+onMounted(async () => {
+  try {
+    const data = await $fetch(`${config.public.apiBase}/categories/all`);
+    categories.value = data || [];
+    if (categories.value.length > 0) {
+      form.category_id = categories.value[0].id; // Default to first category
+    }
+  } catch (err) {
+    console.error('Failed to load categories', err);
+  } finally {
+    categoriesLoading.value = false;
+  }
 });
 
 const loading = ref(false);
@@ -35,7 +52,7 @@ const handleSubmit = async () => {
     });
     navigateTo('/admin/rooms');
   } catch (err) {
-    alert('Failed to create room');
+    alert('Failed to create room. Confirm if all required fields are provided.');
   } finally {
     loading.value = false;
   }
@@ -54,7 +71,11 @@ const handleSubmit = async () => {
       <p class="mt-2 text-slate-400">Fill in the details to add a new room to your property.</p>
     </header>
 
-    <form @submit.prevent="handleSubmit" class="space-y-6 rounded-[2.5rem] bg-slate-950 border border-slate-800 p-10 shadow-md">
+    <div v-if="categoriesLoading" class="flex h-48 items-center justify-center bg-slate-950 rounded-[2.5rem] border border-slate-800">
+      <div class="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+    </div>
+
+    <form v-else @submit.prevent="handleSubmit" class="space-y-6 rounded-[2.5rem] bg-slate-950 border border-slate-800 p-10 shadow-md">
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="space-y-2 lg:col-span-2">
           <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Room Name</label>
@@ -67,11 +88,20 @@ const handleSubmit = async () => {
         </div>
 
         <div class="space-y-2">
-          <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Price/Night ($)</label>
+          <label class="text-xs font-bold uppercase tracking-widest text-slate-500 font-sans">Room Category</label>
+          <select v-model="form.category_id" required class="w-full rounded-2xl border border-slate-800 bg-slate-900 p-4 outline-none text-white focus:ring-2 focus:ring-blue-500/20 select-style transition-all">
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+              {{ cat.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="space-y-2 mb-2">
+          <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Price Per Night ($/night)</label>
           <input v-model="form.price_per_night" required type="number" class="w-full rounded-2xl border border-slate-800 bg-slate-900 p-4 outline-none text-white focus:ring-2 focus:ring-blue-500/20 transition-all" />
         </div>
 
-        <div class="space-y-2">
+        <div class="space-y-2 lg:col-span-2">
           <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Max Capacity</label>
           <input v-model="form.capacity" required type="number" class="w-full rounded-2xl border border-slate-800 bg-slate-900 p-4 outline-none text-white focus:ring-2 focus:ring-blue-500/20 transition-all" />
         </div>
@@ -90,3 +120,12 @@ const handleSubmit = async () => {
   </div>
 </template>
 
+<style scoped>
+.select-style {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1em;
+}
+</style>

@@ -1,5 +1,5 @@
 <script setup>
-import { LayoutDashboard, Bed, CalendarCheck, LogOut, ShieldAlert, Hotel, Percent } from 'lucide-vue-next';
+import { LayoutDashboard, Bed, CalendarCheck, LogOut, ShieldAlert, Hotel, Percent, FolderTree} from 'lucide-vue-next';
 
 const adminAuth = useAdminAuth();
 const router = useRouter();
@@ -27,6 +27,11 @@ const handleLogout = async () => {
         <NuxtLink to="/admin" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-900 text-slate-300 hover:text-white" active-class="bg-blue-600/10 text-blue-400 border border-blue-500/20 font-bold">
           <LayoutDashboard class="h-5 w-5" />
           <span>Overview</span>
+        </NuxtLink>
+
+        <NuxtLink to="/admin/categories" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-900 text-slate-300 hover:text-white" active-class="bg-blue-600/10 text-blue-400 border border-blue-500/20 font-bold">
+          <FolderTree class="h-5 w-5" />
+          <span>Room Categories</span>
         </NuxtLink>
 
         <NuxtLink to="/admin/rooms" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-900 text-slate-300 hover:text-white" active-class="bg-blue-600/10 text-blue-400 border border-blue-500/20 font-bold">
@@ -83,6 +88,8 @@ const handleLogout = async () => {
         <slot />
       </main>
     </div>
+
+    <ToastContainer />
   </div>
 </template>
 
