@@ -11,10 +11,11 @@ type BookingService struct {
 	repo        *repositories.BookingRepository
 	roomRepo    *repositories.RoomRepository
 	pricingServ *WeekendPricingService
+	mailServ    *MailService
 }
 
-func NewBookingService(r *repositories.BookingRepository, rr *repositories.RoomRepository, ps *WeekendPricingService) *BookingService {
-	return &BookingService{repo: r, roomRepo: rr, pricingServ: ps}
+func NewBookingService(r *repositories.BookingRepository, rr *repositories.RoomRepository, ps *WeekendPricingService, ms *MailService) *BookingService {
+	return &BookingService{repo: r, roomRepo: rr, pricingServ: ps, mailServ: ms}
 }
 
 func (s *BookingService) CreateBooking(userID uint, roomID uint, checkIn, checkOut string, promoCode string) (models.Booking, error) {
@@ -51,6 +52,33 @@ func (s *BookingService) GetAllBookings() ([]models.Booking, error) {
 	return s.repo.FindAll()
 }
 
-func (s *BookingService) UpdateBookingStatus(id string, status string) error {
-	return s.repo.UpdateStatus(id, status)
+func (s *BookingService) GetBookingByID(id string) (models.Booking, error) {
+	return s.repo.FindByID(id)
+}
+
+func (s *BookingService) UpdateBookingStatus(id string, status string) (models.Booking, error) {
+	booking, err := s.repo.FindByID(id)
+	if err != nil {
+		return models.Booking{}, err
+	}
+
+	if err := s.repo.UpdateStatus(id, status); err != nil {
+		return models.Booking{}, err
+	}
+
+	booking.Status = status
+
+	if s.mailServ != nil && booking.User.Email != "" {
+		go s.mailServ.SendBookingStatusNotification(
+			booking.User.Email,
+			booking.User.Name,
+			booking.Room.Name,
+			status,
+			booking.CheckIn.Format("2006-01-02"),
+			booking.CheckOut.Format("2006-01-02"),
+			booking.TotalPrice,
+		)
+	}
+
+	return booking, nil
 }

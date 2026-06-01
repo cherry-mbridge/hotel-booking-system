@@ -1,5 +1,5 @@
 <script setup>
-import { Calendar, User, Tag, ArrowLeft, CheckCircle2, XCircle } from 'lucide-vue-next';
+import { Calendar, User, Tag, ArrowLeft, CheckCircle2, XCircle, Loader2, Mail, Bell } from 'lucide-vue-next';
 
 definePageMeta({
   layout: 'admin',
@@ -8,6 +8,7 @@ definePageMeta({
 
 const authStore = useAdminAuth();
 const config = useRuntimeConfig();
+const toast = useToast();
 
 const { data: bookings, pending, error, refresh } = await useFetch(`${config.public.apiBase}/admin/bookings`, {
   headers: {
@@ -15,16 +16,28 @@ const { data: bookings, pending, error, refresh } = await useFetch(`${config.pub
   }
 });
 
+const updatingId = ref(null);
+
 const updateStatus = async (id, status) => {
+  updatingId.value = id;
   try {
-    await $fetch(`${config.public.apiBase}/admin/bookings/${id}/status`, {
+    const result = await $fetch(`${config.public.apiBase}/admin/bookings/${id}/status`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${authStore.token}` },
       body: { status }
     });
-    refresh();
+
+    const actionText = status === 'confirmed' ? 'approved' : status === 'rejected' ? 'rejected' : 'updated';
+    const guestName = result?.booking?.user?.name || 'Guest';
+    toast.success(
+      `Booking ${actionText}`,
+      `Email notification sent to ${guestName}.`
+    );
+    await refresh();
   } catch (err) {
-    alert('Failed to update status');
+    toast.error('Update Failed', err?.data?.error || 'Failed to update booking status');
+  } finally {
+    updatingId.value = null;
   }
 };
 
@@ -49,6 +62,16 @@ const getStatusColor = (status) => {
         <ArrowLeft class="h-5 w-5" />
         Overview
       </NuxtLink>
+    </div>
+
+    <!-- Notification Banner -->
+    <div class="flex items-center gap-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 px-6 py-4 text-sm text-blue-300">
+      <Bell class="h-5 w-5 shrink-0" />
+      <div>
+        <span class="font-bold text-blue-200">Auto-notify enabled:</span>
+        Customers will receive an email automatically when you approve or reject their booking.
+        <span class="hidden sm:inline"> Configure SMTP via environment variables to send real emails.</span>
+      </div>
     </div>
 
     <div v-if="pending" class="flex h-64 items-center justify-center">
@@ -97,12 +120,30 @@ const getStatusColor = (status) => {
               </td>
               <td class="px-8 py-4 text-right">
                 <div v-if="booking.status === 'pending'" class="flex justify-end gap-2">
-                  <button @click="updateStatus(booking.id, 'confirmed')" class="flex h-9 items-center gap-1 rounded-xl bg-green-500/10 border border-green-500/25 px-3 text-sm font-bold text-green-400 transition-all hover:bg-green-500/20">
-                    <CheckCircle2 class="h-4 w-4" /> Approve
+                  <button
+                    @click="updateStatus(booking.id, 'confirmed')"
+                    :disabled="updatingId === booking.id"
+                    class="flex h-9 items-center gap-1 rounded-xl bg-green-500/10 border border-green-500/25 px-3 text-sm font-bold text-green-400 transition-all hover:bg-green-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Loader2 v-if="updatingId === booking.id" class="h-4 w-4 animate-spin" />
+                    <CheckCircle2 v-else class="h-4 w-4" />
+                    Approve
                   </button>
-                  <button @click="updateStatus(booking.id, 'rejected')" class="flex h-9 items-center gap-1 rounded-xl bg-red-500/10 border border-red-500/25 px-3 text-sm font-bold text-red-400 transition-all hover:bg-red-500/20">
-                    <XCircle class="h-4 w-4" /> Reject
+                  <button
+                    @click="updateStatus(booking.id, 'rejected')"
+                    :disabled="updatingId === booking.id"
+                    class="flex h-9 items-center gap-1 rounded-xl bg-red-500/10 border border-red-500/25 px-3 text-sm font-bold text-red-400 transition-all hover:bg-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Loader2 v-if="updatingId === booking.id" class="h-4 w-4 animate-spin" />
+                    <XCircle v-else class="h-4 w-4" />
+                    Reject
                   </button>
+                </div>
+                <div v-else-if="booking.status === 'confirmed' || booking.status === 'rejected'" class="flex justify-end">
+                  <span class="inline-flex items-center gap-1 text-xs text-slate-500">
+                    <Mail class="h-3.5 w-3.5" />
+                    Notified
+                  </span>
                 </div>
               </td>
             </tr>
@@ -112,4 +153,3 @@ const getStatusColor = (status) => {
     </div>
   </div>
 </template>
-
