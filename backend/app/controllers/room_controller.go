@@ -3,11 +3,15 @@ package controllers
 import (
 	"errors"
 	"lumina-hotel-api/app/dto"
+	"lumina-hotel-api/app/helpers"
+	"lumina-hotel-api/app/models"
 	"lumina-hotel-api/app/services"
+	"lumina-hotel-api/config"
 	"lumina-hotel-api/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 type RoomController struct {
@@ -56,7 +60,28 @@ func (ctrl *RoomController) Show(c *gin.Context) {
 func (ctrl *RoomController) Store(c *gin.Context) {
 	var input dto.RoomInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		if errs, ok := err.(validator.ValidationErrors); ok {
+
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": helpers.ValidationErrors(
+					dto.RoomInput{},
+					errs,
+				),
+			})
+
+			return
+		}
+	}
+
+	// DB validation (foreign key check)
+	var category models.Category
+
+	if err := config.DB.First(&category, input.CategoryID).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"errors": gin.H{
+				"category_id": "Selected category does not exist",
+			},
+		})
 		return
 	}
 
@@ -73,8 +98,17 @@ func (ctrl *RoomController) Update(c *gin.Context) {
 	id := c.Param("id")
 	var input dto.RoomInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		if errs, ok := err.(validator.ValidationErrors); ok {
+
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": helpers.ValidationErrors(
+					dto.RoomInput{},
+					errs,
+				),
+			})
+
+			return
+		}
 	}
 
 	room, err := ctrl.service.UpdateRoom(id, input)

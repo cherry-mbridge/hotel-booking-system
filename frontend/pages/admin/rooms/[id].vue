@@ -24,6 +24,7 @@ const form = reactive({
 
 const loading = ref(false);
 const fetching = ref(true);
+const errors = ref({});
 
 onMounted(async () => {
   try {
@@ -60,7 +61,9 @@ const handleSubmit = async () => {
     });
     navigateTo('/admin/rooms');
   } catch (err) {
-    alert('Failed to update room');
+    if (err.data?.errors) {
+      errors.value = err.data.errors;
+    }
   } finally {
     loading.value = false;
   }
@@ -88,11 +91,13 @@ const handleSubmit = async () => {
         <div class="space-y-2 lg:col-span-2">
           <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Room Name</label>
           <input v-model="form.name" required type="text" class="w-full rounded-2xl border border-slate-800 bg-slate-900 p-4 outline-none text-white focus:ring-2 focus:ring-blue-500/20 transition-all placeholder-slate-600" />
+          <p v-if="errors.name" class="text-sm text-red-500 mt-1">{{ errors.name }}</p>
         </div>
         
         <div class="space-y-2 lg:col-span-2">
           <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Image URL</label>
           <input v-model="form.image_url" required type="text" class="w-full rounded-2xl border border-slate-800 bg-slate-900 p-4 outline-none text-white focus:ring-2 focus:ring-blue-500/20 transition-all placeholder-slate-600" />
+          <p v-if="errors.image_url" class="text-sm text-red-500 mt-1">{{ errors.image_url }}</p>
         </div>
 
         <div class="space-y-2">
@@ -102,21 +107,25 @@ const handleSubmit = async () => {
               {{ cat.name }}
             </option>
           </select>
+          <p v-if="errors.category_id" class="text-sm text-red-500 mt-1">{{ errors.category_id }}</p>
         </div>
 
         <div class="space-y-2">
           <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Price/Night ($)</label>
           <input v-model="form.price_per_night" required type="number" class="w-full rounded-2xl border border-slate-800 bg-slate-900 p-4 outline-none text-white focus:ring-2 focus:ring-blue-500/20 transition-all" />
+          <p v-if="errors.price_per_night" class="text-sm text-red-500 mt-1">{{ errors.price_per_night }}</p>
         </div>
 
         <div class="space-y-2 lg:col-span-2">
           <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Max Capacity</label>
           <input v-model="form.capacity" required type="number" class="w-full rounded-2xl border border-slate-800 bg-slate-900 p-4 outline-none text-white focus:ring-2 focus:ring-blue-500/20 transition-all" />
+          <p v-if="errors.capacity" class="text-sm text-red-500 mt-1">{{ errors.capacity }}</p>
         </div>
 
         <div class="space-y-2 lg:col-span-2">
           <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Description</label>
           <textarea v-model="form.description" required rows="4" class="w-full rounded-2xl border border-slate-800 bg-slate-900 p-4 outline-none text-white focus:ring-2 focus:ring-blue-500/20 placeholder-slate-600 transition-all"></textarea>
+          <p v-if="errors.description" class="text-sm text-red-500 mt-1">{{ errors.description }}</p>
         </div>
       </div>
 
