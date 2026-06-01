@@ -161,7 +161,7 @@ const handleBooking = async () => {
                 {{ priceBreakdown.weekend_adjustment > 0 ? 'Weekend Surcharge' : 'Weekend Discount' }}
               </span>
               <span class="font-bold shrink-0" :class="priceBreakdown.weekend_adjustment > 0 ? 'text-red-600' : 'text-green-600'">
-                {{ priceBreakdown.weekend_adjustment > 0 ? '+' : '' }}${{ priceBreakdown.weekend_adjustment.toFixed(2) }}
+                {{ priceBreakdown.weekend_adjustment > 0 ? '+' : '-' }}${{ Math.abs(priceBreakdown.weekend_adjustment).toFixed(2) }}
               </span>
             </div>
 
@@ -180,9 +180,7 @@ const handleBooking = async () => {
             <div class="border-t border-slate-200 pt-3 flex justify-between items-baseline gap-4">
               <div class="min-w-0">
                 <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Stay Price</p>
-                <p v-if="priceBreakdown.base_price + priceBreakdown.seasonal_pricing !== priceBreakdown.final_price" class="text-xs text-slate-400 line-through">
-                  Original: ${{ (priceBreakdown.base_price + priceBreakdown.seasonal_pricing).toFixed(2) }}
-                </p>
+                <p v-if="(priceBreakdown.weekend_adjustment + priceBreakdown.seasonal_pricing + priceBreakdown.promotion_discount) !== 0" class="text-xs text-slate-400 line-through">Original: ${{ (priceBreakdown.base_price + priceBreakdown.weekend_adjustment + priceBreakdown.seasonal_pricing).toFixed(2) }}</p>
               </div>
               <p class="text-2xl font-black text-slate-900 shrink-0">${{ priceBreakdown.final_price.toFixed(2) }}</p>
             </div>

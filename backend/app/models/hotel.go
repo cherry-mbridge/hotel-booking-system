@@ -39,16 +39,19 @@ type Room struct {
 }
 
 type Booking struct {
-	ID         uint      `gorm:"primaryKey" json:"id"`
-	UserID     uint      `gorm:"not null" json:"user_id"`
-	User       User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	RoomID     uint      `gorm:"not null" json:"room_id"`
-	Room       Room      `gorm:"foreignKey:RoomID" json:"room,omitempty"`
-	CheckIn    time.Time `gorm:"not null" json:"check_in"`
-	CheckOut   time.Time `gorm:"not null" json:"check_out"`
-	TotalPrice float64   `gorm:"not null" json:"total_price"`
-	Status     string    `gorm:"default:pending;not null" json:"status"` // pending, confirmed, checked_in, cancelled, completed, rejected
-	CreatedAt  time.Time `json:"created_at"`
+	ID          uint           `gorm:"primaryKey" json:"id"`
+	UserID      uint           `gorm:"not null" json:"user_id"`
+	User        User           `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	RoomID      uint           `gorm:"not null" json:"room_id"`
+	Room        Room           `gorm:"foreignKey:RoomID" json:"room,omitempty"`
+	PromoCodeID *uint          `json:"promo_code_id"`
+	PromoCode   *PromotionCode `json:"promo_code,omitempty"`
+	CheckIn     time.Time      `gorm:"not null" json:"check_in"`
+	CheckOut    time.Time      `gorm:"not null" json:"check_out"`
+	TotalPrice  float64        `gorm:"not null" json:"total_price"`
+	Status      string         `gorm:"default:pending;not null" json:"status"` // pending, confirmed, cancelled
+	CreatedAt   time.Time      `json:"created_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 type WeekendPricing struct {
@@ -66,4 +69,19 @@ type WeekendPricing struct {
 
 func (WeekendPricing) TableName() string {
 	return "weekend_pricings"
+}
+
+type PromotionCode struct {
+	ID           uint       `gorm:"primaryKey" json:"id"`
+	Code         string     `gorm:"unique;not null" json:"code"`
+	DiscountType string     `json:"discount_type"` // percentage | fixed
+	Value        float64    `json:"value"`
+	StartDate    *time.Time `json:"start_date"`
+	EndDate      *time.Time `json:"end_date"`
+	IsActive     bool       `gorm:"default:true" json:"is_active"`
+	MaxUses      int        `json:"max_uses"`
+	UsedCount    int        `json:"used_count"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }

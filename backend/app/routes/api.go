@@ -19,20 +19,22 @@ func SetupRoutes(r *gin.Engine) {
 	roomRepo := repositories.NewRoomRepository(config.DB)
 	bookingRepo := repositories.NewBookingRepository(config.DB)
 	weekendPricingRepo := repositories.NewWeekendPricingRepository(config.DB)
+	promoRepo := repositories.NewPromoRepository(config.DB)
 
 	// Services
 	authService := services.NewAuthService(userRepo)
 	categoryService := services.NewCategoryService(categoryRepo, roomRepo)
 	roomService := services.NewRoomService(roomRepo, bookingRepo)
-	weekendPricingService := services.NewWeekendPricingService(weekendPricingRepo, roomRepo)
-	bookingService := services.NewBookingService(bookingRepo, roomRepo, weekendPricingService)
-
+	weekendPricingService := services.NewWeekendPricingService(weekendPricingRepo, roomRepo, promoRepo, bookingRepo)
+	bookingService := services.NewBookingService(bookingRepo, roomRepo, weekendPricingService, promoRepo)
+	promoService := services.NewPromoService(promoRepo)
 	// Controllers
 	authController := controllers.NewAuthController(authService)
 	categoryController := controllers.NewCategoryController(categoryService)
 	roomController := controllers.NewRoomController(roomService)
 	bookingController := controllers.NewBookingController(bookingService)
 	weekendPricingController := controllers.NewWeekendPricingController(weekendPricingService)
+	promoController := controllers.NewPromoController(promoService)
 
 	// ==========================================
 	// 1. Separate Guard: User Auth & Protected
@@ -85,6 +87,7 @@ func SetupRoutes(r *gin.Engine) {
 			// Bookings Management
 			adminProtected.GET("/bookings", bookingController.Index)
 			adminProtected.PUT("/bookings/:id/status", bookingController.UpdateStatus)
+			adminProtected.DELETE("/bookings/:id", bookingController.Delete)
 
 			// Weekend pricing management
 			adminProtected.GET("/weekend-pricing", weekendPricingController.Index)
@@ -93,6 +96,12 @@ func SetupRoutes(r *gin.Engine) {
 			adminProtected.PUT("/weekend-pricing/:id", weekendPricingController.Update)
 			adminProtected.DELETE("/weekend-pricing/:id", weekendPricingController.Destroy)
 			adminProtected.GET("/rooms/:id/weekend-pricing", weekendPricingController.GetByRoom)
+			// Promo code management
+			adminProtected.GET("/promotions", promoController.Index)
+			// adminProtected.GET("/promotions/:id", promoController.Show)
+			adminProtected.POST("/promotions", promoController.Store)
+			adminProtected.PUT("/promotions/:id", promoController.Update)
+			adminProtected.DELETE("/promotions/:id", promoController.Delete)
 		}
 	}
 
