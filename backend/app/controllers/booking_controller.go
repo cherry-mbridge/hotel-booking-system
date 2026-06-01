@@ -64,10 +64,14 @@ func (ctrl *BookingController) UpdateStatus(c *gin.Context) {
 		return
 	}
 
-	if err := ctrl.service.UpdateBookingStatus(id, input.Status); err != nil {
+	booking, err := ctrl.service.UpdateBookingStatus(id, input.Status)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Booking status updated"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Booking status updated",
+		"booking": booking,
+	})
 }

@@ -31,6 +31,12 @@ func (r *BookingRepository) FindAll() ([]models.Booking, error) {
 	return bookings, err
 }
 
+func (r *BookingRepository) FindByID(id string) (models.Booking, error) {
+	var booking models.Booking
+	err := r.db.Preload("Room").Preload("User").First(&booking, id).Error
+	return booking, err
+}
+
 func (r *BookingRepository) HasActiveBookingsForRoom(roomID string) (bool, error) {
 	var count int64
 	err := r.db.Model(&models.Booking{}).

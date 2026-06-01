@@ -25,7 +25,8 @@ func SetupRoutes(r *gin.Engine) {
 	categoryService := services.NewCategoryService(categoryRepo, roomRepo)
 	roomService := services.NewRoomService(roomRepo, bookingRepo)
 	weekendPricingService := services.NewWeekendPricingService(weekendPricingRepo, roomRepo)
-	bookingService := services.NewBookingService(bookingRepo, roomRepo, weekendPricingService)
+	mailService := services.NewMailService()
+	bookingService := services.NewBookingService(bookingRepo, roomRepo, weekendPricingService, mailService)
 
 	// Controllers
 	authController := controllers.NewAuthController(authService)
