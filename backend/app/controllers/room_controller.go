@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"errors"
 	"lumina-hotel-api/app/dto"
 	"lumina-hotel-api/app/services"
+	"lumina-hotel-api/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +19,22 @@ func NewRoomController(s *services.RoomService) *RoomController {
 }
 
 func (ctrl *RoomController) Index(c *gin.Context) {
+	var q dto.PaginationQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	q.Normalize(utils.DefaultPaginateNumber)
+
+	response, err := ctrl.service.GetRoomsPaginated(q.Page, q.PerPage)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+func (ctrl *RoomController) All(c *gin.Context) {
 	rooms, err := ctrl.service.GetAllRooms()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -71,8 +89,18 @@ func (ctrl *RoomController) Update(c *gin.Context) {
 func (ctrl *RoomController) Destroy(c *gin.Context) {
 	id := c.Param("id")
 	if err := ctrl.service.DeleteRoom(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, services.ErrRoomHasActiveBookings) {
+			c.JSON(http.StatusConflict, gin.H{
+				"code":    "ROOM_HAS_ACTIVE_BOOKINGS",
+				"message": "This room still has active bookings.",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    "INTERNAL_ERROR",
+			"message": "An unexpected error occurred. Please try again later.",
+		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Room deleted"})
+	c.JSON(http.StatusOK, gin.H{"message": "Room deleted successfully"})
 }

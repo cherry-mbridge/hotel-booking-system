@@ -15,18 +15,21 @@ func SetupRoutes(r *gin.Engine) {
 
 	// Repositories
 	userRepo := repositories.NewUserRepository(config.DB)
+	categoryRepo := repositories.NewCategoryRepository(config.DB)
 	roomRepo := repositories.NewRoomRepository(config.DB)
 	bookingRepo := repositories.NewBookingRepository(config.DB)
 	weekendPricingRepo := repositories.NewWeekendPricingRepository(config.DB)
 
 	// Services
 	authService := services.NewAuthService(userRepo)
-	roomService := services.NewRoomService(roomRepo)
+	categoryService := services.NewCategoryService(categoryRepo, roomRepo)
+	roomService := services.NewRoomService(roomRepo, bookingRepo)
 	weekendPricingService := services.NewWeekendPricingService(weekendPricingRepo, roomRepo)
 	bookingService := services.NewBookingService(bookingRepo, roomRepo, weekendPricingService)
 
 	// Controllers
 	authController := controllers.NewAuthController(authService)
+	categoryController := controllers.NewCategoryController(categoryService)
 	roomController := controllers.NewRoomController(roomService)
 	bookingController := controllers.NewBookingController(bookingService)
 	weekendPricingController := controllers.NewWeekendPricingController(weekendPricingService)
@@ -64,7 +67,17 @@ func SetupRoutes(r *gin.Engine) {
 		{
 			// adminProtected.GET("/profile", authController.MeAdmin)
 
+			// Categories CRUD
+			adminProtected.GET("/categories", categoryController.Index)
+			adminProtected.GET("/categories/all", categoryController.All)
+			adminProtected.GET("/categories/:id", categoryController.Show)
+			adminProtected.POST("/categories", categoryController.Store)
+			adminProtected.PUT("/categories/:id", categoryController.Update)
+			adminProtected.DELETE("/categories/:id", categoryController.Destroy)
+
 			// Rooms CRUD
+			adminProtected.GET("/rooms", roomController.Index)
+			adminProtected.GET("/rooms/all", roomController.All)
 			adminProtected.POST("/rooms", roomController.Store)
 			adminProtected.PUT("/rooms/:id", roomController.Update)
 			adminProtected.DELETE("/rooms/:id", roomController.Destroy)
@@ -83,8 +96,14 @@ func SetupRoutes(r *gin.Engine) {
 		}
 	}
 
+	// Public Room Categories Routes
+	api.GET("/categories", categoryController.Index)
+	api.GET("/categories/all", categoryController.All)
+	api.GET("/categories/:id", categoryController.Show)
+
 	// Public Room Routes
 	api.GET("/rooms", roomController.Index)
+	api.GET("/rooms/all", roomController.All)
 	api.GET("/rooms/:id", roomController.Show)
 	api.GET("/rooms/:id/price", weekendPricingController.GetPrice)
 

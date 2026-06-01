@@ -1,5 +1,5 @@
 <script setup>
-import { Plus, Pencil, Trash2, Bed } from 'lucide-vue-next';
+import { Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 definePageMeta({
   layout: 'admin',
@@ -8,20 +8,110 @@ definePageMeta({
 
 const authStore = useAdminAuth();
 const config = useRuntimeConfig();
+const toast = useToast();
 
-const { data: rooms, refresh } = await useFetch(`${config.public.apiBase}/rooms`);
+const rooms = ref([]);
+const loading = ref(false);
 
-const deleteRoom = async (id) => {
-  if (!confirm('Are you sure you want to delete this room?')) return;
-  
+// Pagination state
+const page = ref(1);
+const perPage = ref(10);
+const totalPages = ref(1);
+const total = ref(0);
+
+const fetchRooms = async () => {
+  loading.value = true;
+  try {
+    const data = await $fetch(`${config.public.apiBase}/admin/rooms`, {
+      query: { page: page.value, per_page: perPage.value },
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
+    rooms.value = data.data || [];
+    total.value = data.total || 0;
+    totalPages.value = data.total_pages || 1;
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const prevPage = () => {
+  if (page.value > 1) {
+    page.value--;
+    fetchRooms();
+  }
+};
+
+const nextPage = () => {
+  if (page.value < totalPages.value) {
+    page.value++;
+    fetchRooms();
+  }
+};
+
+onMounted(() => {
+  fetchRooms();
+});
+
+// State
+const deletingId = ref(null);
+const showConfirm = ref(false);
+const roomToDelete = ref(null);
+const showErrorModal = ref(false);
+const errorModalTitle = ref('Error');
+const errorModalMessage = ref('Something went wrong.');
+
+const confirmMessage = computed(() => {
+  if (!roomToDelete.value) return 'Are you sure you want to delete this room? This action cannot be undone.';
+  return `Are you sure you want to delete "${roomToDelete.value.name}"? This action cannot be undone.`;
+});
+
+const openConfirm = (room) => {
+  roomToDelete.value = room;
+  showConfirm.value = true;
+};
+
+const closeConfirm = () => {
+  showConfirm.value = false;
+  roomToDelete.value = null;
+};
+
+const closeErrorModal = () => {
+  showErrorModal.value = false;
+};
+
+const handleDelete = async () => {
+  if (!roomToDelete.value) return;
+
+  const id = roomToDelete.value.id;
+  deletingId.value = id;
+
   try {
     await $fetch(`${config.public.apiBase}/admin/rooms/${id}`, {
       method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${authStore.token}` }
+      headers: { Authorization: `Bearer ${authStore.token}` }
     });
-    refresh();
+
+    toast.success('Room Deleted', `"${roomToDelete.value.name}" has been deleted successfully.`);
+    await fetchRooms();
+    closeConfirm();
   } catch (err) {
-    alert('Failed to delete room');
+    closeConfirm();
+    const status = err?.statusCode || err?.response?.status;
+    const data = err?.data || err?.response?._data || {};
+
+    if (status === 409 && data.code === 'ROOM_HAS_ACTIVE_BOOKINGS') {
+      errorModalTitle.value = 'Cannot Delete Room';
+      errorModalMessage.value = 'This room still has active bookings.';
+      showErrorModal.value = true;
+    } else {
+      errorModalTitle.value = 'Delete Failed';
+      errorModalMessage.value = data.message || 'Unable to delete the room. Please try again later.';
+      showErrorModal.value = true;
+    }
+  } finally {
+    deletingId.value = null;
   }
 };
 </script>
@@ -39,7 +129,15 @@ const deleteRoom = async (id) => {
       </NuxtLink>
     </div>
 
-    <div class="overflow-hidden rounded-[2.5rem] bg-slate-950 border border-slate-800 shadow-md">
+    <div v-if="loading" class="flex items-center justify-center h-48 bg-slate-950 rounded-[2rem] border border-slate-800/60">
+      <div class="h-7 w-7 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+    </div>
+
+    <div v-else-if="rooms.length === 0" class="p-12 text-center bg-slate-950 rounded-[2rem] border border-slate-800/80 text-slate-500">
+      No rooms found.
+    </div>
+
+    <div v-else class="overflow-hidden rounded-[2.5rem] bg-slate-950 border border-slate-800 shadow-md">
       <div class="overflow-x-auto">
         <table class="w-full text-left">
           <thead>
@@ -66,8 +164,13 @@ const deleteRoom = async (id) => {
                   <NuxtLink :to="`/admin/rooms/${room.id}`" class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 transition-all hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400">
                     <Pencil class="h-4 w-4" />
                   </NuxtLink>
-                  <button @click="deleteRoom(room.id)" class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 transition-all hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400">
-                    <Trash2 class="h-4 w-4" />
+                  <button
+                    @click="openConfirm(room)"
+                    :disabled="deletingId === room.id"
+                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 transition-all hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Loader2 v-if="deletingId === room.id" class="h-4 w-4 animate-spin" />
+                    <Trash2 v-else class="h-4 w-4" />
                   </button>
                 </div>
               </td>
@@ -75,7 +178,50 @@ const deleteRoom = async (id) => {
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="flex items-center justify-between border-t border-slate-800 px-8 py-5">
+        <div class="text-sm text-slate-400">
+          Showing <span class="font-bold text-white">{{ rooms.length }}</span> of <span class="font-bold text-white">{{ total }}</span> rooms
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            @click="prevPage"
+            :disabled="page === 1 || loading"
+            class="flex items-center gap-1 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm font-semibold"
+          >
+            <ChevronLeft class="h-4 w-4" />
+            Prev
+          </button>
+          <span class="text-sm text-slate-400 font-medium px-2">Page {{ page }} of {{ totalPages }}</span>
+          <button
+            @click="nextPage"
+            :disabled="page === totalPages || loading"
+            class="flex items-center gap-1 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm font-semibold"
+          >
+            Next
+            <ChevronRight class="h-4 w-4" />
+          </button>
+        </div>
+      </div>
     </div>
+
+    <ConfirmModal
+      :is-open="showConfirm"
+      title="Delete Room"
+      :message="confirmMessage"
+      confirm-text="Delete"
+      :loading="deletingId !== null"
+      @confirm="handleDelete"
+      @cancel="closeConfirm"
+    />
+
+    <ErrorModal
+      :is-open="showErrorModal"
+      :title="errorModalTitle"
+      :message="errorModalMessage"
+      button-text="Got it"
+      @close="closeErrorModal"
+    />
   </div>
 </template>
-

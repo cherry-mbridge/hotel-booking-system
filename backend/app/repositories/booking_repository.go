@@ -31,6 +31,14 @@ func (r *BookingRepository) FindAll() ([]models.Booking, error) {
 	return bookings, err
 }
 
+func (r *BookingRepository) HasActiveBookingsForRoom(roomID string) (bool, error) {
+	var count int64
+	err := r.db.Model(&models.Booking{}).
+		Where("room_id = ? AND status IN ?", roomID, []string{"pending", "confirmed", "checked_in"}).
+		Count(&count).Error
+	return count > 0, err
+}
+
 func (r *BookingRepository) UpdateStatus(id string, status string) error {
 	return r.db.Model(&models.Booking{}).Where("id = ?", id).Update("status", status).Error
 }

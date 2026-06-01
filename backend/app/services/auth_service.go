@@ -36,6 +36,11 @@ func (s *AuthService) Login(email, password string) (string, models.User, error)
 	return s.LoginUser(email, password)
 }
 
+func (s *AuthService) FindByEmail(email string) (models.User, error) {
+	user, err := s.repo.FindByEmail(email)
+	return user, err
+}
+
 func (s *AuthService) LoginUser(email, password string) (string, models.User, error) {
 	user, err := s.repo.FindByEmail(email)
 	if err != nil {

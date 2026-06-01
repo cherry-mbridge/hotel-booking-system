@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -14,24 +16,26 @@ type User struct {
 }
 
 type Category struct {
-	ID          uint      `gorm:"primaryKey" json:"id"`
-	Name        string    `gorm:"type:varchar(255);not null" json:"name"`
-	Description string    `gorm:"type:varchar(255)" json:"description"`
-	Rooms       []Room    `json:"rooms,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID          uint           `gorm:"primaryKey" json:"id"`
+	Name        string         `gorm:"type:varchar(255);not null" json:"name"`
+	Description string         `gorm:"type:varchar(255)" json:"description"`
+	Rooms       []Room         `json:"rooms,omitempty"`
+	CreatedAt   time.Time      `json:"created_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type Room struct {
-	ID            uint      `gorm:"primaryKey" json:"id"`
-	CategoryID    uint      `gorm:"not null" json:"category_id"`
-	Category      *Category `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
-	Name          string    `gorm:"not null" json:"name"`
-	Description   string    `gorm:"type:varchar(255)" json:"description"`
-	PricePerNight float64   `gorm:"not null" json:"price_per_night"`
-	Capacity      int       `gorm:"not null" json:"capacity"`
-	ImageURL      string    `json:"image_url"`
-	Status        string    `gorm:"default:available;not null" json:"status"`
-	CreatedAt     time.Time `json:"created_at"`
+	ID            uint           `gorm:"primaryKey" json:"id"`
+	CategoryID    uint           `gorm:"not null" json:"category_id"`
+	Category      *Category      `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
+	Name          string         `gorm:"not null" json:"name"`
+	Description   string         `gorm:"type:varchar(255)" json:"description"`
+	PricePerNight float64        `gorm:"not null" json:"price_per_night"`
+	Capacity      int            `gorm:"not null" json:"capacity"`
+	ImageURL      string         `json:"image_url"`
+	Status        string         `gorm:"default:available;not null" json:"status"`
+	CreatedAt     time.Time      `json:"created_at"`
+	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type Booking struct {
@@ -43,7 +47,7 @@ type Booking struct {
 	CheckIn    time.Time `gorm:"not null" json:"check_in"`
 	CheckOut   time.Time `gorm:"not null" json:"check_out"`
 	TotalPrice float64   `gorm:"not null" json:"total_price"`
-	Status     string    `gorm:"default:pending;not null" json:"status"` // pending, confirmed, cancelled
+	Status     string    `gorm:"default:pending;not null" json:"status"` // pending, confirmed, checked_in, cancelled, completed, rejected
 	CreatedAt  time.Time `json:"created_at"`
 }
 
