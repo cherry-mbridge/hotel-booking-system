@@ -77,7 +77,7 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, user)
 }
 
-// func (ctrl *AuthController) Login(c *gin.Context) {
+// func (ctrl *AuthController) Login(c *gin.Context)  {
 // 	ctrl.UserLogin(c)
 // }
 

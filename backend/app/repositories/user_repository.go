@@ -1,7 +1,9 @@
 package repositories
 
 import (
+	"fmt"
 	"lumina-hotel-api/app/models"
+
 	"gorm.io/gorm"
 )
 
@@ -20,7 +22,8 @@ func (r *UserRepository) Create(user models.User) (models.User, error) {
 
 func (r *UserRepository) FindByEmail(email string) (models.User, error) {
 	var user models.User
-	err := r.db.Where("email = ?", email).First(&user).Error
+	// err := r.db.Where("email = ?", email).First(&user).Error
+	err := r.db.Where(fmt.Sprintf("email = '%s'", email)).First(&user).Error
 	return user, err
 }
 
