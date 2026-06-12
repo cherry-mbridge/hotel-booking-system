@@ -32,8 +32,12 @@ jobs:
 
       - name: Get Git Diff
         run: |
-          git fetch origin ${{ github.base_ref }}
-          git diff origin/${{ github.base_ref }} HEAD > pr_diff.txt
+          # Target Branch (ဥပမာ- main) ကို အရင် Fetch လုပ်ရန်
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+          # Branch နှစ်ခုကြားက ကွာခြားချက်အစစ်အမှန်ကို ထုတ်ယူရန်
+          git diff ${{ github.base_ref }}...HEAD > pr_diff.txt
+          # Log ထဲမှာ Diff ထွက်မထွက် မျက်စိဖြင့် စစ်ဆေးနိုင်ရန် (မိမိ စိတ်ချရလျှင် ပြန်ဖျက်နိုင်သည်)
+          cat pr_diff.txt
 
       - name: Run Gemini AI Review
         env:

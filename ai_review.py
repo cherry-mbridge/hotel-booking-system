@@ -20,11 +20,14 @@ def main():
 
     # Gemini API သို့ ပေးပို့မည့် Prompt ရေးသားခြင်း
     prompt = f"""
-    You are an expert code reviewer. Review the following git diff of a Pull Request.
-    Identify any potential bugs, security vulnerabilities, or performance issues.
-    Provide constructive feedback and code suggestions in a clear bulleted format.
-    Keep the response concise and write it in English.
+    You are an elite automated security auditor and code reviewer.
+    Analyze the following Git Diff very carefully. 
     
+    CRITICAL MANDATE: Check for any Security Vulnerabilities, especially SQL Injection risks (like using fmt.Sprintf to format raw SQL inputs instead of parameterized queries).
+    If you find a SQL Injection, point it out immediately with a high-severity warning and provide the corrected code using placeholders/parameterization.
+    
+    Keep your review structured, clear, and in English.
+
     Git Diff:
     {git_diff}
     """
