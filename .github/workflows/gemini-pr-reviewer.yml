@@ -1,0 +1,45 @@
+name: Gemini AI PR Reviewer
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - main
+      - develop
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # PR တွင် Comment ပြန်ရေးရန်အတွက် မဖြစ်မနေလိုအပ်သည်
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Git History အားလုံးကို ဆွဲယူရန်
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: pip install requests
+
+      - name: Get Git Diff
+        run: |
+          # Target Branch နှင့် ယခု Branch ကြားမှ ကုဒ်ကွာခြားချက်ကို ဖတ်ခြင်း
+          git diff origin/${{ github.base_ref }} HEAD > pr_diff.txt
+
+      - name: Run Gemini AI Review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python ai_review.py
+
+      - name: Post Comment to PR
+        uses: thollander/actions-comment-pull-request@v2
+        if: hashFiles('review_result.md') != ''
+        with:
+          filePath: review_result.md
