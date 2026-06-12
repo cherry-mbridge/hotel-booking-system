@@ -26,11 +26,13 @@ jobs:
           python-version: '3.x'
 
       - name: Install Dependencies
-        run: pip install requests
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
 
       - name: Get Git Diff
         run: |
-          # Target Branch နှင့် ယခု Branch ကြားမှ ကုဒ်ကွာခြားချက်ကို ဖတ်ခြင်း
+          git fetch origin ${{ github.base_ref }}
           git diff origin/${{ github.base_ref }} HEAD > pr_diff.txt
 
       - name: Run Gemini AI Review
